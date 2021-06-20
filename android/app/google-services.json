@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "981009157015",
+    "project_id": "hare-krishna-b1b37",
+    "storage_bucket": "hare-krishna-b1b37.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:981009157015:android:d40d316dd7e9bcfa2d52d2",
+        "android_client_info": {
+          "package_name": "in.folknet.hare_krishna"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "981009157015-2vc845uca9rndmga88jrf2pt4co0t1c5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.folknet.hare_krishna",
+            "certificate_hash": "85d8aeb3849770279ea79fc1c98fde1ddab2d18d"
+          }
+        },
+        {
+          "client_id": "981009157015-26adfn9hrag7iv1v131nqj6np15ps0kg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXr5YNSOHMPs7M9vsnHKCrzE2-sUi_2PI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "981009157015-26adfn9hrag7iv1v131nqj6np15ps0kg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
