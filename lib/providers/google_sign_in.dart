@@ -13,26 +13,65 @@ class GoogleSignInProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future login() async {
+  void loginSilently() async {
     isSigningIn = true;
-    if (await googleSignIn.isSignedIn()) {
-      await googleSignIn.disconnect();
-    }
-    final user = await googleSignIn.signIn();
-    if (user == null) {
+    await googleSignIn.signInSilently();
+    isSigningIn = false;
+  }
+
+  Future login() async {
+    try {
+      isSigningIn = true;
+      if (await googleSignIn.isSignedIn()) {
+        print('Was here');
+        await googleSignIn.disconnect().whenComplete(() {
+          FirebaseAuth.instance.signOut();
+        });
+      }
+      //       final user = await googleSignIn.signIn();
+      //       if (user == null) {
+      //         isSigningIn = false;
+      //         return;
+      //       } else {
+      //         final googleAuth = await user.authentication;
+
+      //         final credential = GoogleAuthProvider.credential(
+      //           accessToken: googleAuth.accessToken,
+      //           idToken: googleAuth.idToken,
+      //         );
+
+      //         await FirebaseAuth.instance
+      //             .signInWithCredential(credential)
+      //             .then((value) {
+      //           print('Cred : ${value.user}');
+      //         });
+      //       }
+      //     });
+      //   });
+      //   isSigningIn = false;
+      // } else {
+      final user = await googleSignIn.signIn();
+      if (user == null) {
+        isSigningIn = false;
+        return;
+      } else {
+        final googleAuth = await user.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        await FirebaseAuth.instance
+            .signInWithCredential(credential)
+            .then((value) {
+          print('Cred : ${value.user}');
+        });
+        isSigningIn = false;
+      }
+    } catch (er) {
       isSigningIn = false;
-      return;
-    } else {
-      final googleAuth = await user.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-
-      isSigningIn = false;
+      return null;
     }
   }
 
@@ -40,5 +79,6 @@ class GoogleSignInProvider extends ChangeNotifier {
     await googleSignIn.disconnect();
     Navigator.of(ctx).pop();
     FirebaseAuth.instance.signOut();
+    Navigator.of(ctx).pushNamedAndRemoveUntil('/', (route) => false);
   }
 }

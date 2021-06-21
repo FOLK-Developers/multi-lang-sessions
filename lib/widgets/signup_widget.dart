@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:multi_language_sessions/helpers/background_painter.dart';
+import 'package:multi_language_sessions/providers/google_sign_in.dart';
 import 'package:multi_language_sessions/screens/details_screen.dart';
 import 'package:multi_language_sessions/widgets/google_sign_in_button.dart';
+import 'package:provider/provider.dart';
 
-class SignUpWidget extends StatelessWidget {
+class SignUpWidget extends StatefulWidget {
   final bool hasError;
   SignUpWidget(this.hasError);
+
+  @override
+  _SignUpWidgetState createState() => _SignUpWidgetState();
+}
+
+class _SignUpWidgetState extends State<SignUpWidget> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.hasError)
+      SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Something went wrong'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      });
+  }
 
   @override
   Widget build(BuildContext context) => Stack(

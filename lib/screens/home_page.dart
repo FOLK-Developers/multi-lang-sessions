@@ -1,40 +1,84 @@
+import 'dart:developer' as dev;
+
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:multi_language_sessions/helpers/textstyles.dart';
 
 import 'package:multi_language_sessions/providers/google_sign_in.dart';
+import 'package:multi_language_sessions/screens/details_screen.dart';
+import 'package:multi_language_sessions/services/firebase_queries.dart';
 import 'package:multi_language_sessions/widgets/logged_in.dart';
 import 'package:multi_language_sessions/widgets/signup_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final List<Color> colorList = [
     Colors.black,
     Colors.black87,
     Colors.black38,
     Colors.black12,
   ];
+
+  bool hasUserData = false;
+  bool isLoading = false;
+  @override
+  void initState() {
+    super.initState();
+    SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+      setState(() {
+        isLoading = true;
+      });
+      SharedPreferences.getInstance().then((value) {
+        setState(() {
+          hasUserData = value.getBool('user_data') != null
+              ? value.getBool('user_data')!
+              : false;
+          isLoading = false;
+        });
+        print('=====================\nUser data: $hasUserData\n=============');
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: ChangeNotifierProvider(
-          create: (context) => GoogleSignInProvider(),
-          child: StreamBuilder(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, snapshot) {
-              final provider = Provider.of<GoogleSignInProvider>(context);
+        body: isLoading
+            ? buildLoading(context)
+            : ChangeNotifierProvider(
+                create: (context) => GoogleSignInProvider(),
+                child: StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.userChanges(),
+                  builder: (context, snapshot) {
+                    print('User: ${snapshot.data}');
+                    final provider = Provider.of<GoogleSignInProvider>(context);
 
-              if (provider.isSigningIn) {
-                return buildLoading(context);
-              } else if (snapshot.hasData) {
-                //check if details are in database
-                return LoggedInWidget();
-              } else {
-                return SignUpWidget(false);
-              }
-            },
-          ),
-        ),
+                    if (provider.isSigningIn) {
+                      return buildLoading(context);
+                    } else if (snapshot.hasData) {
+                      final User? user = snapshot.data;
+                      print('User: $user');
+                      if (hasUserData)
+                        return LoggedInWidget(user, {});
+                      else
+                        return DetailsScreen(
+                          hasSignedIn: true,
+                          user: user,
+                        );
+                    } else if (snapshot.hasError) {
+                      return SignUpWidget(true);
+                    } else
+                      return SignUpWidget(false);
+                  },
+                ),
+              ),
       );
 
   Widget buildLoading(BuildContext ctx) {
@@ -73,7 +117,7 @@ class HomePage extends StatelessWidget {
                     ColorizeAnimatedText(
                       'Signing In',
                       colors: colorList,
-                      textStyle: RobotoBoldStyle(),
+                      textStyle: RobotoBoldStyle(size: 20),
                       textAlign: TextAlign.center,
                     )
                   ],
@@ -83,15 +127,15 @@ class HomePage extends StatelessWidget {
             Container(
               // color: Colors.red,
               margin: EdgeInsets.zero,
-              height: 45,
-              width: MediaQuery.of(ctx).size.width - 20,
+              height: 80,
+              width: 140,
               child: FittedBox(
                 child: AnimatedTextKit(
                   animatedTexts: [
                     ColorizeAnimatedText(
                       'A Product of FOLK Developers',
                       colors: colorList,
-                      textStyle: RobotoBoldStyle(size: 12),
+                      textStyle: RobotoBoldStyle(),
                       textAlign: TextAlign.center,
                     )
                   ],

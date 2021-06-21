@@ -1,14 +1,22 @@
 import 'dart:math';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:multi_language_sessions/helpers/background_painter.dart';
 import 'package:multi_language_sessions/helpers/textstyles.dart';
+import 'package:multi_language_sessions/helpers/utility.dart';
 import 'package:multi_language_sessions/providers/country_code_provider.dart';
+import 'package:multi_language_sessions/services/firebase_queries.dart';
 import 'package:multi_language_sessions/widgets/logged_in.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailsScreen extends StatefulWidget {
-  DetailsScreen({Key? key}) : super(key: key);
+  final bool hasSignedIn;
+  final User? user;
+  DetailsScreen({Key? key, this.hasSignedIn = false, this.user})
+      : super(key: key);
   static const routeName = '/details-screen';
 
   @override
@@ -23,6 +31,31 @@ class _DetailsScreenState extends State<DetailsScreen> {
   final nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   int? _initValue = 97;
+  bool isLoading = false;
+  Map<String, dynamic> data = {};
+
+  void autofillData() {
+    setState(() {
+      nameController.text = widget.user!.displayName!;
+      numberController.text =
+          widget.user!.phoneNumber == null ? '' : widget.user!.phoneNumber!;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.hasSignedIn)
+      SchedulerBinding.instance!.addPostFrameCallback((timeStamp) {
+        setState(() {
+          isLoading = true;
+        });
+        autofillData();
+        setState(() {
+          isLoading = false;
+        });
+      });
+  }
 
   @override
   void dispose() {
@@ -37,198 +70,144 @@ class _DetailsScreenState extends State<DetailsScreen> {
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
     return Scaffold(
-      body: Stack(
-        fit: StackFit.loose,
-        children: [
-          CustomPaint(
-            painter: BackgroundPainter(),
-            size: Size.infinite,
-          ),
-          Positioned(
-            top: height / 4,
-            child: Center(
-              child: Form(
-                key: _formKey,
-                child: Container(
-                  padding: EdgeInsets.all(10.0),
-                  height: height / 1.1,
-                  width: width / 1.1,
-                  child: Column(
-                    //padding: const EdgeInsets.all(15.0),
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SelectableText(
-                        'Tell us a bit about you',
-                        style: RobotoBoldStyle(),
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      // SelectableText(
-                      //   'Name',
-                      //   style: RobotoBoldStyle(weight: FontWeight.w400),
-                      // ),
-                      myTextFormField('Name', nameController),
-                      SizedBox(
-                        height: 30,
-                      ),
-                      // SelectableText(
-                      //   'Phone Number',
-                      //   style: RobotoBoldStyle(weight: FontWeight.w400),
-                      // ),
-                      SizedBox(height: 30),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Consumer<CountryCodeProvider>(
-                              builder: (context, countryProvider, child) {
-                            return Padding(
-                              padding: const EdgeInsets.all(6.0),
-                              child: SizedBox(
-                                width: 79,
-                                child: DropdownButton(
-                                  onChanged: (dynamic val) {
-                                    setState(() {
-                                      _initValue = val;
-                                    });
-                                    print(_initValue);
-                                  },
-                                  value: _initValue,
-                                  items: List.generate(
-                                    countryProvider.countryCodeList.length,
-                                    (i) => DropdownMenuItem(
-                                      child: Text(
-                                          ' ${countryProvider.countryCodeList[i].phoneCode}'),
-                                      value: i + 1,
+      body: isLoading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Stack(
+              fit: StackFit.loose,
+              children: [
+                CustomPaint(
+                  painter: BackgroundPainter(),
+                  size: Size.infinite,
+                ),
+                Positioned(
+                  top: height / 4,
+                  child: Center(
+                    child: Form(
+                      key: _formKey,
+                      child: Container(
+                        padding: EdgeInsets.all(10.0),
+                        height: height / 1.1,
+                        width: width / 1.1,
+                        child: Column(
+                          //padding: const EdgeInsets.all(15.0),
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SelectableText(
+                              'Tell us a bit about you',
+                              style: RobotoBoldStyle(),
+                            ),
+                            SizedBox(
+                              height: 20,
+                            ),
+                            // SelectableText(
+                            //   'Name',
+                            //   style: RobotoBoldStyle(weight: FontWeight.w400),
+                            // ),
+                            myTextFormField('Name', nameController, 'name'),
+                            SizedBox(
+                              height: 30,
+                            ),
+                            // SelectableText(
+                            //   'Phone Number',
+                            //   style: RobotoBoldStyle(weight: FontWeight.w400),
+                            // ),
+                            SizedBox(height: 30),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Consumer<CountryCodeProvider>(
+                                    builder: (context, countryProvider, child) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: SizedBox(
+                                      width: 79,
+                                      child: DropdownButton(
+                                        onChanged: (dynamic val) {
+                                          setState(() {
+                                            _initValue = val;
+                                          });
+                                          print(_initValue);
+                                        },
+                                        value: _initValue,
+                                        items: List.generate(
+                                          countryProvider
+                                              .countryCodeList.length,
+                                          (i) => DropdownMenuItem(
+                                            child: Text(
+                                                ' ${countryProvider.countryCodeList[i].phoneCode}'),
+                                            value: i + 1,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                }),
+                                myTextFormField(
+                                    'Number', numberController, 'number'),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 30,
+                            ),
+                            // SelectableText(
+                            //   'City',
+                            //   style: RobotoBoldStyle(weight: FontWeight.w400),
+                            // ),
+                            myTextFormField('City', cityController, 'city'),
+                            Container(
+                              padding:
+                                  const EdgeInsets.fromLTRB(40, 10, 40, 10),
+                              height: 70,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (widget.hasSignedIn) {
+                                    SharedPreferences.getInstance()
+                                        .then((value) {
+                                      value.setBool('user_data', true);
+                                    });
+                                    data.addAll({
+                                      'name': nameController.text,
+                                      'number': numberController.text,
+                                      'city': cityController.text,
+                                      'language': 'English',
+                                      'gmail': widget.user == null
+                                          ? ''
+                                          : widget.user!.email,
+                                      'photo_url': widget.user == null
+                                          ? ''
+                                          : widget.user!.photoURL,
+                                      'last_seen': Utility.getCurrentEpoch
+                                    });
+                                    print(
+                                        '===================\n Data: $data\n=================');
+                                    FirebaseQueries().setUserData(data);
+                                  }
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            LoggedInWidget(widget.user, data),
+                                      ),
+                                      (route) => false);
+                                },
+                                child: Text('Done'),
                               ),
-                            );
-                          }),
-                          myTextFormField('Number', numberController),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 30,
-                      ),
-                      // SelectableText(
-                      //   'City',
-                      //   style: RobotoBoldStyle(weight: FontWeight.w400),
-                      // ),
-                      myTextFormField('City', cityController),
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(40, 10, 40, 10),
-                        height: 70,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context)
-                                .pushNamed(LoggedInWidget.routeName);
-                          },
-                          child: Text('Done'),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
-  Widget buildForm(double height, double width, int? value) {
-    return Form(
-      key: _formKey,
-      child: Container(
-        padding: EdgeInsets.all(10.0),
-        height: height / 1.1,
-        width: width / 2,
-        child: Center(
-          child: Column(
-            children: [
-              SelectableText(
-                'Tell us a bit about you',
-                style: RobotoBoldStyle(),
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              // SelectableText(
-              //   'Name',
-              //   style: RobotoBoldStyle(weight: FontWeight.w400),
-              // ),
-              myTextFormField('Name', nameController),
-              SizedBox(
-                height: 30,
-              ),
-              // SelectableText(
-              //   'Phone Number',
-              //   style: RobotoBoldStyle(weight: FontWeight.w400),
-              // ),
-              SizedBox(height: 30),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Consumer<CountryCodeProvider>(
-                      builder: (context, countryProvider, child) {
-                    return Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: SizedBox(
-                        width: 79,
-                        child: DropdownButton(
-                          onChanged: (dynamic val) {
-                            print(
-                                '${val - 1} \t ${countryProvider.countryCodeList[val - 1].phoneCode}');
-                            setState(() {
-                              value = val - 1;
-                            });
-                          },
-                          value: value,
-                          items: List.generate(
-                            countryProvider.countryCodeList.length,
-                            (i) => DropdownMenuItem(
-                              child: Text(
-                                  ' ${countryProvider.countryCodeList[i].phoneCode}'),
-                              value: i + 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                  myTextFormField('Number', numberController),
-                ],
-              ),
-              SizedBox(
-                height: 30,
-              ),
-              // SelectableText(
-              //   'City',
-              //   style: RobotoBoldStyle(weight: FontWeight.w400),
-              // ),
-              myTextFormField('City', cityController),
-              SizedBox(
-                width: 150,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(LoggedInWidget.routeName);
-                  },
-                  child: Text('Next Screen'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget myTextFormField(String name, TextEditingController ctrl) {
+  Widget myTextFormField(
+      String name, TextEditingController ctrl, String keyVal) {
     return Container(
       height: 70,
       width: 200,
@@ -239,6 +218,14 @@ class _DetailsScreenState extends State<DetailsScreen> {
           hintStyle: RobotoBoldStyle(),
         ),
         style: RobotoBoldStyle(),
+        onChanged: (val) {
+          final text = val;
+          data.update(keyVal, (value) {
+            return text;
+          }, ifAbsent: () {
+            return text;
+          });
+        },
         onFieldSubmitted: (s) {
           setState(() {
             ctrl.text = s;

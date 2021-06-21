@@ -5,6 +5,7 @@ import 'package:multi_language_sessions/providers/google_sign_in.dart';
 import 'package:multi_language_sessions/screens/details_screen.dart';
 
 import 'package:multi_language_sessions/screens/home_page.dart';
+import 'package:multi_language_sessions/screens/make_event_screen.dart';
 import 'package:multi_language_sessions/widgets/logged_in.dart';
 import 'package:provider/provider.dart';
 
@@ -28,9 +29,9 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider<CountryCodeProvider>(
           create: (context) => CountryCodeProvider(),
         ),
-        ChangeNotifierProvider<GoogleSignInProvider>(
-          create: (context) => GoogleSignInProvider(),
-        ),
+        // ChangeNotifierProvider<GoogleSignInProvider>(
+        //   create: (context) => GoogleSignInProvider(),
+        // ),
       ],
       child: FutureBuilder(
           future: _initialization,
@@ -46,7 +47,9 @@ class _MyAppState extends State<MyApp> {
                 home: HomePage(),
                 routes: {
                   DetailsScreen.routeName: (context) => DetailsScreen(),
-                  LoggedInWidget.routeName: (context) => LoggedInWidget()
+                  LoggedInWidget.routeName: (context) =>
+                      LoggedInWidget(null, {}),
+                  MakeEventScreen.routeName: (context) => MakeEventScreen(),
                 },
               );
             else
