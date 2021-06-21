@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
                 //check if details are in database
                 return LoggedInWidget();
               } else {
-                return SignUpWidget();
+                return SignUpWidget(false);
               }
             },
           ),
@@ -57,28 +57,41 @@ class HomePage extends StatelessWidget {
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 100),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      'assets/images/Red FOLK Logo.png',
-                    ),
+                // child: Column(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   mainAxisSize: MainAxisSize.min,
+                //   children: [
+                //     Image.asset(
+                //       'assets/images/Red FOLK Logo.png',
+                //       height: 150,
+                //       width: 150,
+                //     ),
+                //   ],
+                // ),
+                child: AnimatedTextKit(
+                  animatedTexts: [
+                    ColorizeAnimatedText(
+                      'Signing In',
+                      colors: colorList,
+                      textStyle: RobotoBoldStyle(),
+                      textAlign: TextAlign.center,
+                    )
                   ],
                 ),
               ),
             ),
             Container(
               // color: Colors.red,
+              margin: EdgeInsets.zero,
               height: 45,
               width: MediaQuery.of(ctx).size.width - 20,
               child: FittedBox(
                 child: AnimatedTextKit(
                   animatedTexts: [
                     ColorizeAnimatedText(
-                      'Youth Empowerment Club',
+                      'A Product of FOLK Developers',
                       colors: colorList,
-                      textStyle: RobotoBoldStyle(),
+                      textStyle: RobotoBoldStyle(size: 12),
                       textAlign: TextAlign.center,
                     )
                   ],

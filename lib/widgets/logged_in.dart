@@ -1,12 +1,18 @@
 //import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:multi_language_sessions/custom_widgets/loading_indicator_with_text.dart';
+import 'package:multi_language_sessions/providers/google_sign_in.dart';
+import 'package:multi_language_sessions/widgets/meta_data_section.dart';
 // import 'package:multi_language_sessions/providers/google_sign_in.dart';
 // import 'package:multi_language_sessions/widgets/video_list.dart';
 
 import 'package:provider/provider.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart' as yt;
+
+import 'play_pause_bar.dart';
+import 'source_input_section.dart';
 
 class LoggedInWidget extends StatefulWidget {
   static const routeName = '/logged-in';
@@ -25,7 +31,7 @@ class _LoggedInWidgetState extends State<LoggedInWidget> {
           'https://www.youtube.com/watch?v=Ut85dWwrTV8')!,
       params: const YoutubePlayerParams(
         playlist: [
-          'nPt8bK2gbaU',
+          'GLHAcAkdB8M',
           'K18cpp_-gP8',
           'iLnmTe5Q2Qw',
           '_WoCV4c6XOE',
@@ -63,7 +69,26 @@ class _LoggedInWidgetState extends State<LoggedInWidget> {
       controller: _controller,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Youtube Player IFrame'),
+          title: const Text('Gita Sessions'),
+          actions: [
+            IconButton(
+              onPressed: () {
+                showDialog(
+                    context: context,
+                    builder: (ctx) => Dialog(
+                          child: LoadingIndicatorWithMessage(
+                              text: 'Logging Out !'),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                        ));
+
+                Provider.of<GoogleSignInProvider>(context, listen: false)
+                    .logout(context);
+              },
+              icon: Icon(Icons.logout),
+            ),
+          ],
         ),
         body: LayoutBuilder(
           builder: (context, constraints) {
@@ -84,7 +109,7 @@ class _LoggedInWidgetState extends State<LoggedInWidget> {
             return ListView(
               children: [
                 player,
-                const Controls(),
+                //const Controls(),
               ],
             );
           },

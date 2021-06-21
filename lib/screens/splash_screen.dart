@@ -38,6 +38,8 @@ class SplashScreen extends StatelessWidget {
                   children: [
                     Image.asset(
                       'assets/images/Red FOLK Logo.png',
+                      width: 150,
+                      height: 150,
                     ),
                   ],
                 ),
@@ -51,7 +53,7 @@ class SplashScreen extends StatelessWidget {
                 child: AnimatedTextKit(
                   animatedTexts: [
                     ColorizeAnimatedText(
-                      'Youth Empowerment Club',
+                      'FOLK Developers',
                       colors: colorList,
                       textStyle: RobotoBoldStyle(),
                       textAlign: TextAlign.center,

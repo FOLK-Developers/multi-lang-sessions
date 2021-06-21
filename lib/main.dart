@@ -37,9 +37,11 @@ class _MyAppState extends State<MyApp> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done)
               return MaterialApp(
+                debugShowCheckedModeBanner: false,
                 title: 'Multi Language Sessions',
                 theme: ThemeData(
-                  primarySwatch: Colors.blue,
+                  primaryColor: Color.fromRGBO(0, 41, 107, 1),
+                  accentColor: Color.fromRGBO(0, 41, 107, 1),
                 ),
                 home: HomePage(),
                 routes: {

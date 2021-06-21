@@ -15,7 +15,9 @@ class GoogleSignInProvider extends ChangeNotifier {
 
   Future login() async {
     isSigningIn = true;
-
+    if (await googleSignIn.isSignedIn()) {
+      await googleSignIn.disconnect();
+    }
     final user = await googleSignIn.signIn();
     if (user == null) {
       isSigningIn = false;
@@ -34,8 +36,9 @@ class GoogleSignInProvider extends ChangeNotifier {
     }
   }
 
-  void logout() async {
+  void logout(BuildContext ctx) async {
     await googleSignIn.disconnect();
+    Navigator.of(ctx).pop();
     FirebaseAuth.instance.signOut();
   }
 }
