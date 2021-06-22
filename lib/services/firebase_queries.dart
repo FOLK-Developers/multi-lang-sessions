@@ -35,15 +35,12 @@ class FirebaseQueries with ChangeNotifier {
     });
   }
 
-  Future<DocumentSnapshot?> getCurrentSession() async {
-    //end time > current time
-    //sort by start time
-    //show the first feed
+  Future<DocumentSnapshot?> checkNumberExists(String mobile) async {
     try {
+      print('===================\n Mobile: $mobile\n=================');
       return await _db
-          .collection('Sessions')
-          .where('end_time', isGreaterThan: Utility.getCurrentEpoch)
-          .orderBy('end_time', descending: true)
+          .collection('Users')
+          .where('number', isEqualTo: mobile)
           .get()
           .then((val) {
         print('=====================\n\n SNAP : ${val.docs.first.data()}');
@@ -54,23 +51,65 @@ class FirebaseQueries with ChangeNotifier {
     }
   }
 
+  Future<DocumentSnapshot?> getCurrentSession() async {
+    //end time > current time
+    //sort by start time
+    //show the first feed
+    try {
+      return await _db
+          .collection('Sessions')
+          .where('end_time', isGreaterThan: Utility.getCurrentEpoch)
+          .orderBy(
+            'end_time',
+          )
+          .get()
+          .then((val) {
+        print('=====================\n\n SNAP : ${val.docs.first.data()}');
+        return val.docs.first;
+      });
+    } catch (er) {
+      print('=====================\n\n SNAP : $er\n===================');
+      return null;
+    }
+  }
+
   void markAttendance(
       {required String userDocId,
       required String sessionId,
       required Map<String, dynamic> data,
       required List<int> sessionTrack}) {
-    final attendanceCollection =
-        _db.collection('Users').doc(userDocId).collection('Attendance');
-    attendanceCollection.snapshots().length.then((value) {
-      if (value > 0) {
-        attendanceCollection
-          ..where('session_id', isEqualTo: sessionId).get().then((value) {
-            value.docs.first
-                .data()
-                .update('session_track', (value) => value = sessionTrack);
+    try {
+      print('===========');
+      print('DATA : $data');
+      print('===========');
+      final attendanceCollection =
+          _db.collection('Users').doc(userDocId).collection('Attendance');
+
+      attendanceCollection.get().then((value) {
+        final length = value.docs.length;
+        _db.collection('Users').doc(userDocId).update({'sessions': length});
+
+        if (length > 0) {
+          print('===========');
+          print('Session ID : $sessionId');
+          print('===========');
+          attendanceCollection
+              .where('session_id', isEqualTo: sessionId)
+              .get()
+              .then((value) {
+            value.docs.first.reference.update({
+              'session_track': sessionTrack,
+            });
+          }).whenComplete(() {
+            print('==========\nUPDATED\n==============');
           });
-      } else
-        attendanceCollection.add(data);
-    });
+        } else
+          attendanceCollection.add(data).whenComplete(() {
+            print('==========\nADDED\n==============');
+          });
+      });
+    } catch (er) {
+      print('==========\nERROR: $er\n==============');
+    }
   }
 }

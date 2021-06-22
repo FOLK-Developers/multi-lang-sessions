@@ -3,19 +3,22 @@ import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:multi_language_sessions/custom_widgets/loading_indicator_with_text.dart';
 import 'package:multi_language_sessions/helpers/background_painter.dart';
 import 'package:multi_language_sessions/helpers/textstyles.dart';
 import 'package:multi_language_sessions/helpers/utility.dart';
 import 'package:multi_language_sessions/providers/country_code_provider.dart';
 import 'package:multi_language_sessions/services/firebase_queries.dart';
 import 'package:multi_language_sessions/widgets/logged_in.dart';
+import 'package:multi_language_sessions/widgets/signup_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailsScreen extends StatefulWidget {
   final bool hasSignedIn;
   final User? user;
-  DetailsScreen({Key? key, this.hasSignedIn = false, this.user})
+  // ignore: avoid_init_to_null
+  DetailsScreen({Key? key, this.hasSignedIn = false, this.user = null})
       : super(key: key);
   static const routeName = '/details-screen';
 
@@ -163,34 +166,86 @@ class _DetailsScreenState extends State<DetailsScreen> {
                               height: 70,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  if (widget.hasSignedIn) {
-                                    SharedPreferences.getInstance()
-                                        .then((value) {
-                                      value.setBool('user_data', true);
-                                    });
-                                    data.addAll({
-                                      'name': nameController.text,
-                                      'number': numberController.text,
-                                      'city': cityController.text,
-                                      'language': 'English',
-                                      'gmail': widget.user == null
-                                          ? ''
-                                          : widget.user!.email,
-                                      'photo_url': widget.user == null
-                                          ? ''
-                                          : widget.user!.photoURL,
-                                      'last_seen': Utility.getCurrentEpoch
-                                    });
-                                    print(
-                                        '===================\n Data: $data\n=================');
-                                    FirebaseQueries().setUserData(data);
-                                  }
-                                  Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            LoggedInWidget(widget.user, data),
-                                      ),
-                                      (route) => false);
+                                  final _country =
+                                      Provider.of<CountryCodeProvider>(context,
+                                              listen: false)
+                                          .currentCountry;
+                                  // if (widget.hasSignedIn) {
+                                  SharedPreferences.getInstance().then((value) {
+                                    value.setBool('user_data', true);
+                                  });
+                                  //}
+                                  showDialog(
+                                      context: context,
+                                      builder: (ctx) => Dialog(
+                                            child: LoadingIndicatorWithMessage(
+                                                text:
+                                                    'Checking if the details exists.'),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(15.0),
+                                            ),
+                                          ));
+                                  FirebaseQueries()
+                                      .checkNumberExists(_country.phoneCode! +
+                                          numberController.text)
+                                      .then((value) {
+                                    Navigator.of(context).pop();
+                                    if (value == null) {
+                                      data.addAll({
+                                        'name': nameController.text,
+                                        'number': (_country.phoneCode! +
+                                                numberController.text)
+                                            .trim(),
+                                        'city': cityController.text,
+                                        'language': 'English',
+                                        'gmail': widget.user == null
+                                            ? ''
+                                            : widget.user!.email,
+                                        'photo_url': widget.user == null
+                                            ? ''
+                                            : widget.user!.photoURL,
+                                        'last_seen': Utility.getCurrentEpoch
+                                      });
+                                      print(
+                                          '===================\n Data: $data\n=================');
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                LoggedInWidget(
+                                                    widget.user, data),
+                                          ),
+                                          (route) => false);
+
+                                      FirebaseQueries().setUserData(data);
+                                    } else {
+                                      showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                                title: Text('Alert'),
+                                                content: Text(
+                                                    'The number already exists and is linked with the gmail id : ${value['gmail']} '),
+                                                actions: [
+                                                  TextButton(
+                                                    child: Text('Okay'),
+                                                    onPressed: () =>
+                                                        Navigator.of(context)
+                                                            .pop(true),
+                                                  ),
+                                                ],
+                                              )).then((value) {
+                                        if (value) {
+                                          Navigator.of(context)
+                                              .pushAndRemoveUntil(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        SignUpWidget(false),
+                                                  ),
+                                                  (route) => false);
+                                        }
+                                      });
+                                    }
+                                  });
                                 },
                                 child: Text('Done'),
                               ),
