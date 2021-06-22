@@ -52,7 +52,7 @@ class _EventsListScreenState extends State<EventsListScreen> {
                 leading: CircleAvatar(
                   backgroundColor: themeData.colorScheme.secondary,
                   child: Text(
-                    index.toString(),
+                    (index + 1).toString(),
                     style: themeData.textTheme.bodyText1!
                         .copyWith(color: themeData.colorScheme.onSecondary),
                   ),
