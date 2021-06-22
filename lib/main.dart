@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:multi_language_sessions/providers/country_code_provider.dart';
 import 'package:multi_language_sessions/providers/google_sign_in.dart';
 import 'package:multi_language_sessions/screens/details_screen.dart';
+import 'package:multi_language_sessions/screens/edit_events_screen.dart';
+import 'package:multi_language_sessions/screens/events_list_screen.dart';
 
 import 'package:multi_language_sessions/screens/home_page.dart';
 import 'package:multi_language_sessions/screens/make_event_screen.dart';
@@ -29,9 +31,9 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider<CountryCodeProvider>(
           create: (context) => CountryCodeProvider(),
         ),
-        // ChangeNotifierProvider<GoogleSignInProvider>(
-        //   create: (context) => GoogleSignInProvider(),
-        // ),
+        ChangeNotifierProvider<GoogleSignInProvider>(
+          create: (context) => GoogleSignInProvider(),
+        ),
       ],
       child: FutureBuilder(
           future: _initialization,
@@ -48,8 +50,10 @@ class _MyAppState extends State<MyApp> {
                 routes: {
                   DetailsScreen.routeName: (context) => DetailsScreen(),
                   LoggedInWidget.routeName: (context) =>
-                      LoggedInWidget(null, {}),
+                      LoggedInWidget(null, {}, ''),
                   MakeEventScreen.routeName: (context) => MakeEventScreen(),
+                  EventsListScreen.routeName: (context) => EventsListScreen(),
+                  EditEventScreen.routeName: (context) => EditEventScreen(),
                 },
               );
             else

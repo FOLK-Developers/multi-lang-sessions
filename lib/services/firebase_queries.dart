@@ -20,22 +20,32 @@ class FirebaseQueries with ChangeNotifier {
     _db.collection('Users').add(data);
   }
 
-  Future<void> setSessionsData(Map<String, dynamic> data) async {
-    await _db.collection('Sessions').add(data);
+  Future<void> setSessionsData(Map<String, dynamic> data,
+      {bool isUpdating = false, String id = ''}) async {
+    if (!isUpdating)
+      await _db.collection('Sessions').add(data);
+    else
+      await _db.collection('Sessions').doc(id).update(data);
   }
 
-  Future<QueryDocumentSnapshot<Map<String, dynamic>>> getUserData(
-      String gmail) async {
-    return await _db
-        .collection('Users')
-        .where('gmail', isEqualTo: gmail)
-        .get()
-        .then((value) {
-      return value.docs.first;
-    });
+  Future<QueryDocumentSnapshot<Map<String, dynamic>>?> getUserData(String gmail,
+      {bool isMobile = false}) async {
+    try {
+      return await _db
+          .collection('Users')
+          .where(isMobile ? 'number' : 'gmail', isEqualTo: gmail)
+          .get()
+          .then((value) {
+        return value.docs.first;
+      });
+    } catch (er) {
+      print('Error : $er');
+      return null;
+    }
   }
 
-  Future<DocumentSnapshot?> checkNumberExists(String mobile) async {
+  Future<DocumentSnapshot<Map<String, dynamic>>?> checkNumberExists(
+      String mobile) async {
     try {
       print('===================\n Mobile: $mobile\n=================');
       return await _db
@@ -73,6 +83,32 @@ class FirebaseQueries with ChangeNotifier {
     }
   }
 
+  Future<DocumentSnapshot<Map<String, dynamic>>?> getSessionFromId(
+      String id) async {
+    try {
+      return await _db.collection('Sessions').doc(id).get().then((val) {
+        print('=====================\n\n SNAP : $val');
+        return val;
+      });
+    } catch (er) {
+      print('=====================\n\n SNAP : $er\n===================');
+      return null;
+    }
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>?>
+      getAllSession() async {
+    try {
+      return await _db.collection('Sessions').get().then((val) {
+        print('=====================\n\n SNAP : ${val.docs}');
+        return val.docs;
+      });
+    } catch (er) {
+      print('=====================\n\n SNAP : $er\n===================');
+      return null;
+    }
+  }
+
   void markAttendance(
       {required String userDocId,
       required String sessionId,
@@ -97,9 +133,15 @@ class FirebaseQueries with ChangeNotifier {
               .where('session_id', isEqualTo: sessionId)
               .get()
               .then((value) {
-            value.docs.first.reference.update({
-              'session_track': sessionTrack,
-            });
+            if (value.docs.length > 0)
+              value.docs.first.reference.update({
+                'session_track': sessionTrack,
+              });
+            else {
+              attendanceCollection.add(data).whenComplete(() {
+                print('==========\nADDED\n==============');
+              });
+            }
           }).whenComplete(() {
             print('==========\nUPDATED\n==============');
           });

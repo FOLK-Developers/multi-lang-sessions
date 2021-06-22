@@ -8,6 +8,7 @@ import 'package:multi_language_sessions/helpers/background_painter.dart';
 import 'package:multi_language_sessions/helpers/textstyles.dart';
 import 'package:multi_language_sessions/helpers/utility.dart';
 import 'package:multi_language_sessions/providers/country_code_provider.dart';
+import 'package:multi_language_sessions/screens/home_page.dart';
 import 'package:multi_language_sessions/services/firebase_queries.dart';
 import 'package:multi_language_sessions/widgets/logged_in.dart';
 import 'package:multi_language_sessions/widgets/signup_widget.dart';
@@ -38,10 +39,22 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Map<String, dynamic> data = {};
 
   void autofillData() {
-    setState(() {
-      nameController.text = widget.user!.displayName!;
-      numberController.text =
-          widget.user!.phoneNumber == null ? '' : widget.user!.phoneNumber!;
+    FirebaseQueries().getUserData(widget.user!.email!).then((value) {
+      if (value != null)
+        setState(() {
+          nameController.text = value['name'];
+          numberController.text = value['number'];
+          cityController.text = value['city'];
+          isLoading = false;
+        });
+      else {
+        setState(() {
+          isLoading = false;
+          nameController.text = widget.user!.displayName!;
+          numberController.text = '';
+          cityController.text = '';
+        });
+      }
     });
   }
 
@@ -54,9 +67,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
           isLoading = true;
         });
         autofillData();
-        setState(() {
-          isLoading = false;
-        });
       });
   }
 
@@ -173,6 +183,13 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                   // if (widget.hasSignedIn) {
                                   SharedPreferences.getInstance().then((value) {
                                     value.setBool('user_data', true);
+                                    value.setString(
+                                        'mobile',
+                                        (numberController.text
+                                                .contains(_country.phoneCode!)
+                                            ? numberController.text
+                                            : _country.phoneCode! +
+                                                numberController.text.trim()));
                                   });
                                   //}
                                   showDialog(
@@ -187,23 +204,28 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                             ),
                                           ));
                                   FirebaseQueries()
-                                      .checkNumberExists(_country.phoneCode! +
-                                          numberController.text)
+                                      .checkNumberExists((numberController.text
+                                              .contains(_country.phoneCode!)
+                                          ? numberController.text
+                                          : _country.phoneCode! +
+                                              numberController.text.trim()))
                                       .then((value) {
                                     Navigator.of(context).pop();
                                     if (value == null) {
                                       data.addAll({
                                         'name': nameController.text,
-                                        'number': (_country.phoneCode! +
-                                                numberController.text)
-                                            .trim(),
+                                        'number': (numberController.text
+                                                .contains(_country.phoneCode!)
+                                            ? numberController.text
+                                            : _country.phoneCode! +
+                                                numberController.text.trim()),
                                         'city': cityController.text,
                                         'language': 'English',
                                         'gmail': widget.user == null
                                             ? ''
                                             : widget.user!.email,
                                         'photo_url': widget.user == null
-                                            ? ''
+                                            ? 'https://www.pngkey.com/png/full/282-2820067_taste-testing-at-baskin-robbins-empty-profile-picture.png'
                                             : widget.user!.photoURL,
                                         'last_seen': Utility.getCurrentEpoch
                                       });
@@ -213,12 +235,19 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                           MaterialPageRoute(
                                             builder: (context) =>
                                                 LoggedInWidget(
-                                                    widget.user, data),
+                                                    widget.user,
+                                                    data,
+                                                    (_country.phoneCode! +
+                                                            numberController
+                                                                .text)
+                                                        .trim()),
                                           ),
                                           (route) => false);
 
                                       FirebaseQueries().setUserData(data);
-                                    } else {
+                                    } else if (value['gmail'] != null &&
+                                        value['gmail'] != '' &&
+                                        !widget.hasSignedIn) {
                                       showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
@@ -239,11 +268,36 @@ class _DetailsScreenState extends State<DetailsScreen> {
                                               .pushAndRemoveUntil(
                                                   MaterialPageRoute(
                                                     builder: (context) =>
-                                                        SignUpWidget(false),
+                                                        HomePage(),
                                                   ),
                                                   (route) => false);
                                         }
                                       });
+                                    } else if (value['gmail'] != null &&
+                                        value['gmail'] != '' &&
+                                        widget.hasSignedIn) {
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                LoggedInWidget(
+                                                    widget.user,
+                                                    value.data()!,
+                                                    value['number'].trim()),
+                                          ),
+                                          (route) => false);
+                                    } else {
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                LoggedInWidget(
+                                                    widget.user,
+                                                    value.data()!,
+                                                    (_country.phoneCode! +
+                                                            numberController
+                                                                .text)
+                                                        .trim()),
+                                          ),
+                                          (route) => false);
                                     }
                                   });
                                 },

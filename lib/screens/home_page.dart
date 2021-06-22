@@ -29,6 +29,7 @@ class _HomePageState extends State<HomePage> {
 
   bool hasUserData = false;
   bool isLoading = false;
+  String mobile = '';
   @override
   void initState() {
     super.initState();
@@ -41,9 +42,13 @@ class _HomePageState extends State<HomePage> {
           hasUserData = value.getBool('user_data') != null
               ? value.getBool('user_data')!
               : false;
+          mobile = value.getString('mobile') != null
+              ? value.getString('mobile')!
+              : '';
           isLoading = false;
         });
-        print('=====================\nUser data: $hasUserData\n=============');
+        print(
+            '=====================\nUser data: $hasUserData\t Number: $mobile\n=============');
       });
     });
   }
@@ -62,11 +67,13 @@ class _HomePageState extends State<HomePage> {
 
                     if (provider.isSigningIn) {
                       return buildLoading(context);
-                    } else if (snapshot.hasData) {
+                    } else if (!snapshot.hasData && hasUserData)
+                      return LoggedInWidget(null, {}, mobile);
+                    else if (snapshot.hasData) {
                       final User? user = snapshot.data;
                       print('User: $user');
                       if (hasUserData)
-                        return LoggedInWidget(user, {});
+                        return LoggedInWidget(user, {}, '');
                       else
                         return DetailsScreen(
                           hasSignedIn: true,
